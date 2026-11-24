@@ -1,0 +1,336 @@
+{% extends 'shop/base.html' %}
+
+{% block title %}Chi tiết đơn hàng #{{ order.id }} | Atiso Fashion{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-title {
+        font-weight: 800;
+        color: #222;
+    }
+
+    .info-card {
+        border: none;
+        border-radius: 10px;
+    }
+
+    .section-title {
+        font-weight: 700;
+        margin-bottom: 20px;
+    }
+
+    .info-item {
+        margin-bottom: 14px;
+    }
+
+    .order-table th {
+        white-space: nowrap;
+    }
+
+    .order-table td {
+        vertical-align: middle;
+    }
+
+    .total-price {
+        color: #c62828;
+        font-weight: 800;
+    }
+
+    .status-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+</style>
+{% endblock %}
+
+
+{% block content %}
+
+<div class="container py-5">
+
+    <!-- THÔNG BÁO -->
+    {% if messages %}
+
+        {% for message in messages %}
+
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show"
+                 role="alert">
+
+                {{ message }}
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="alert"
+                        aria-label="Đóng">
+                </button>
+
+            </div>
+
+        {% endfor %}
+
+    {% endif %}
+
+
+    <!-- TIÊU ĐỀ -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+
+        <h2 class="page-title mb-0">
+            CHI TIẾT ĐƠN HÀNG #{{ order.id }}
+        </h2>
+
+        <a href="{% url 'manager_orders' %}"
+           class="btn btn-outline-dark">
+            Quay lại danh sách
+        </a>
+
+    </div>
+
+
+    <div class="row">
+
+        <!-- THÔNG TIN NGƯỜI NHẬN -->
+        <div class="col-md-5 mb-4">
+
+            <div class="card info-card shadow-sm h-100">
+
+                <div class="card-body p-4">
+
+                    <h5 class="section-title">
+                        THÔNG TIN NHẬN HÀNG
+                    </h5>
+
+                    <p class="info-item">
+                        <strong>Người nhận:</strong>
+                        {{ order.recipient_name }}
+                    </p>
+
+                    <p class="info-item">
+                        <strong>Số điện thoại:</strong>
+                        {{ order.phone }}
+                    </p>
+
+                    <p class="info-item">
+                        <strong>Địa chỉ:</strong>
+                        {{ order.address }}
+                    </p>
+
+                    <p class="info-item">
+                        <strong>Ghi chú:</strong>
+                        {{ order.note|default:"Không có" }}
+                    </p>
+
+                    <p class="info-item">
+                        <strong>Ngày đặt:</strong>
+                        {{ order.created_at|date:"d/m/Y H:i" }}
+                    </p>
+
+
+                    <!-- TRẠNG THÁI -->
+                    <p class="info-item">
+
+                        <strong>Trạng thái hiện tại:</strong>
+
+                        {% if order.status == 'pending' %}
+
+                            <span class="badge bg-warning text-dark">
+                                Chờ xác nhận
+                            </span>
+
+                        {% elif order.status == 'confirmed' %}
+
+                            <span class="badge bg-success">
+                                Đã xác nhận
+                            </span>
+
+                        {% elif order.status == 'cancelled' %}
+
+                            <span class="badge bg-danger">
+                                Đã hủy
+                            </span>
+
+                        {% endif %}
+
+                    </p>
+
+                    <hr>
+
+                    <h5 class="section-title">
+                        XỬ LÝ ĐƠN HÀNG
+                    </h5>
+
+
+                    {% if order.status == 'pending' %}
+
+                        <span class="badge bg-warning text-dark mb-3">
+                            Chờ xác nhận
+                        </span>
+
+                        <div class="status-actions">
+
+                            <!-- XÁC NHẬN -->
+                            <form action="{% url 'update_order_status' order.id %}"
+                                  method="POST">
+
+                                {% csrf_token %}
+
+                                <input type="hidden"
+                                       name="status"
+                                       value="confirmed">
+
+                                <button type="submit"
+                                        class="btn btn-success">
+                                    Xác nhận đơn hàng
+                                </button>
+
+                            </form>
+
+
+                            <!-- HỦY ĐƠN -->
+                            <form action="{% url 'update_order_status' order.id %}"
+                                  method="POST">
+
+                                {% csrf_token %}
+
+                                <input type="hidden"
+                                       name="status"
+                                       value="cancelled">
+
+                                <button type="submit"
+                                        class="btn btn-danger">
+                                    Hủy đơn hàng
+                                </button>
+
+                            </form>
+
+                        </div>
+
+
+                    {% elif order.status == 'confirmed' %}
+
+                        <span class="badge bg-success">
+                            Đã xác nhận
+                        </span>
+
+                        <p class="text-success mt-3 mb-0">
+                            Đơn hàng đã được xác nhận và không thể thay đổi trạng thái.
+                        </p>
+
+
+                    {% elif order.status == 'cancelled' %}
+
+                        <span class="badge bg-danger">
+                            Đã hủy
+                        </span>
+
+                        <p class="text-danger mt-3 mb-0">
+                            Đơn hàng đã bị hủy và không thể thay đổi trạng thái.
+                        </p>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- DANH SÁCH SẢN PHẨM -->
+        <div class="col-md-7 mb-4">
+
+            <div class="card info-card shadow-sm">
+
+                <div class="card-body p-4">
+
+                    <h5 class="section-title">
+                        SẢN PHẨM ĐÃ ĐẶT
+                    </h5>
+
+                    <div class="table-responsive">
+
+                        <table class="table table-bordered table-hover order-table align-middle">
+
+                            <thead class="table-dark">
+
+                                <tr>
+                                    <th>Sản phẩm</th>
+                                    <th>Đơn giá</th>
+                                    <th>Số lượng</th>
+                                    <th>Thành tiền</th>
+                                </tr>
+
+                            </thead>
+
+                            <tbody>
+
+                                {% for item in order_items %}
+
+                                    <tr>
+
+                                        <td>
+                                            {{ item.product_name }}
+                                        </td>
+
+                                        <td>
+                                            {{ item.price|floatformat:0 }} VNĐ
+                                        </td>
+
+                                        <td>
+                                            {{ item.quantity }}
+                                        </td>
+
+                                        <td class="text-danger fw-bold">
+                                            {{ item.subtotal|floatformat:0 }} VNĐ
+                                        </td>
+
+                                    </tr>
+
+                                {% empty %}
+
+                                    <tr>
+
+                                        <td colspan="4"
+                                            class="text-center text-muted py-4">
+
+                                            Đơn hàng chưa có sản phẩm.
+
+                                        </td>
+
+                                    </tr>
+
+                                {% endfor %}
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+
+                    <!-- TỔNG TIỀN -->
+                    <div class="text-end mt-4">
+
+                        <h5 class="mb-0">
+
+                            Tổng tiền:
+
+                            <span class="total-price">
+                                {{ order.total_price|floatformat:0 }} VNĐ
+                            </span>
+
+                        </h5>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
